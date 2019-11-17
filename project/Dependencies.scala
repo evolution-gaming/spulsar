@@ -10,6 +10,23 @@ object Dependencies {
   object Cats {
     private val version = "2.0.0"
     val core   = "org.typelevel" %% "cats-core"   % version
-    val effect = "org.typelevel" %% "cats-effect" % "2.0.0"
+    val effect = "org.typelevel" %% "cats-effect" % version
+  }
+
+  object Logback {
+    private val version = "1.2.3"
+    val core    = "ch.qos.logback" % "logback-core"    % version
+    val classic = "ch.qos.logback" % "logback-classic" % version
+  }
+
+  object Slf4j {
+    private val version = "1.7.29"
+    val api                = "org.slf4j" % "slf4j-api"        % version
+    val `log4j-over-slf4j` = "org.slf4j" % "log4j-over-slf4j" % version
+  }
+
+  object Pulsar {
+    private val version = "2.4.1"
+    val client = "org.apache.pulsar" % "pulsar-client" % version
   }
 }
