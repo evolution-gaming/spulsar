@@ -2,7 +2,6 @@ import sbt._
 
 object Dependencies {
 
-  val scalatest        = "org.scalatest"       %% "scalatest"      % "3.2.3"
   val `cats-helper`    = "com.evolutiongaming" %% "cats-helper"    % "2.2.1"
   val smetrics         = "com.evolutiongaming" %% "smetrics"       % "0.2.0"
   val `kind-projector` = "org.typelevel"        % "kind-projector" % "0.10.3"
@@ -28,5 +27,18 @@ object Dependencies {
   object Pulsar {
     private val version = "2.7.0"
     val client = "org.apache.pulsar" % "pulsar-client" % version
+  }
+
+  object Scalatest {
+    private val version = "3.2.3"
+    val funsuite  = "org.scalatest" %% "scalatest-funsuite" % version
+    val scalatest = "org.scalatest" %% "scalatest"          % version
+  }
+
+  object Pureconfig {
+    private val version = "0.12.3"
+    val pureconfig = "com.github.pureconfig" %% "pureconfig"      % version
+    val cats       = "com.github.pureconfig" %% "pureconfig-cats" % version
+    val `cats-effect` = "com.github.pureconfig" %% "pureconfig-cats-effect" % version
   }
 }

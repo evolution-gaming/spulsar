@@ -8,7 +8,7 @@
 ## Setup
 
 ```scala
-resolvers += Resolver.bintrayRepo("evolutiongaming", "maven")
+resolvers += Resolver.bintrayRepo("evolution", "maven")
 
 libraryDependencies += "com.evolutiongaming" %% "spulsar" % "0.0.1"
 ```

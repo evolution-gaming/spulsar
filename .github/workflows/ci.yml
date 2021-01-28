@@ -4,7 +4,6 @@ on: [push, pull_request]
 
 jobs:
   test:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -12,6 +11,13 @@ jobs:
         scala:
           - 2.13.4
           - 2.12.12
+
+    services:
+      pulsar:
+        image: apachepulsar/pulsar:2.7.0
+        ports:
+          - 6650:6650
+          - 8080:8080
 
     steps:
       - uses: actions/checkout@v2
@@ -25,6 +31,9 @@ jobs:
 
       - name: build ${{ matrix.scala }}
         run: sbt ++${{ matrix.scala }} clean coverage test
+        env:
+          PULSAR_HOST: pulsar
+          PULSAR_PORT: 6650
 
       - name: test coverage
         if: success()
@@ -32,10 +41,10 @@ jobs:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         run: sbt ++${{ matrix.scala }} coverageReport coverageAggregate coveralls
 
-      - name: slack
-        uses: homoluctus/slatify@master
-        if: failure() && github.ref == 'refs/heads/master'
-        with:
-          type: ${{ job.status }}
-          job_name: Build
-          url: ${{ secrets.SLACK_WEBHOOK }}
+#      - name: slack
+#        uses: homoluctus/slatify@master
+#        if: failure() && github.ref == 'refs/heads/master'
+#        with:
+#          type: ${{ job.status }}
+#          job_name: Build
+#          url: ${{ secrets.SLACK_WEBHOOK }}
