@@ -22,11 +22,11 @@ jobs:
           --health-cmd "curl -s http://pulsar:8080/admin/v2/namespaces/public"
           --health-interval 1s
           --health-timeout 5s
-          --health-retries 10
+          --health-retries 5
 
     steps:
       - name: pulsar logs
-          run: docker logs "${{ job.services.pulsar.id }}"
+        run: docker logs "${{ job.services.pulsar.id }}"
 
       - uses: actions/checkout@v2
 
