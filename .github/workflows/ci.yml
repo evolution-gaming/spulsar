@@ -25,6 +25,9 @@ jobs:
           --health-retries 10
 
     steps:
+      - name: pulsar logs
+          run: docker logs "${{ job.services.pulsar.id }}"
+
       - uses: actions/checkout@v2
 
       - uses: coursier/cache-action@v5
@@ -39,9 +42,6 @@ jobs:
         env:
           PULSAR_HOST: localhost
           PULSAR_PORT: 6650
-
-      - name: pulsar logs
-        run: docker logs "${{ job.services.pulsar.id }}"
 
       - name: test coverage
         if: success()
