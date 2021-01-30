@@ -15,6 +15,7 @@ jobs:
     services:
       pulsar:
         image: apachepulsar/pulsar:2.7.0
+        command: bin/pulsar standalone
         ports:
           - 6650:6650
           - 8080:8080
@@ -22,7 +23,7 @@ jobs:
           --health-cmd "curl -s http://pulsar:8080/admin/v2/namespaces/public"
           --health-interval 1s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     steps:
       - name: pulsar logs
