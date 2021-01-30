@@ -32,7 +32,7 @@ jobs:
       - name: build ${{ matrix.scala }}
         run: sbt ++${{ matrix.scala }} clean coverage test
         env:
-          PULSAR_HOST: pulsar
+          PULSAR_HOST: localhost
           PULSAR_PORT: 6650
 
       - name: test coverage
