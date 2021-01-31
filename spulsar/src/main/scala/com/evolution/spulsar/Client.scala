@@ -3,13 +3,13 @@ package com.evolution.spulsar
 import cats.Monad
 import cats.effect.{Resource, Sync}
 import cats.syntax.all._
-import org.apache.pulsar.client.api.{Consumer, Producer, PulsarClient}
+import org.apache.pulsar.client.api._
 
 trait Client[F[_]] {
 
-  def producer(topic: String): Resource[F, Producer[Array[Byte]] /*TODO*/ ]
+  def producer[A](schema: Schema[A])(f: ProducerBuilder[A] => ProducerBuilder[A]): Resource[F, Producer[A]]
 
-  def consumer(topic: String): Resource[F, Consumer[Array[Byte]] /*TODO*/ ]
+  def consumer[A](schema: Schema[A])(f: ConsumerBuilder[A] => ConsumerBuilder[A]): Resource[F, Consumer[A]]
 }
 
 object Client {
@@ -37,10 +37,9 @@ object Client {
       }
       .map { pulsarClient =>
         new Client[F] {
-          def producer(topic: String) = {
-            val producer = pulsarClient
-              .newProducer()
-              .topic(topic)
+
+          def producer[A](schema: Schema[A])(f: ProducerBuilder[A] => ProducerBuilder[A]) = {
+            val producer = f(pulsarClient.newProducer(schema))
             Resource.make {
               FromCompletableFuture[F].apply { producer.createAsync() }
             } { producer =>
@@ -48,10 +47,8 @@ object Client {
             }
           }
 
-          def consumer(topic: String) = {
-            val consumer = pulsarClient
-              .newConsumer()
-              .topic(topic)
+          def consumer[A](schema: Schema[A])(f: ConsumerBuilder[A] => ConsumerBuilder[A]) = {
+            val consumer = f(pulsarClient.newConsumer(schema))
             Resource.make {
               FromCompletableFuture[F].apply { consumer.subscribeAsync() }
             } { consumer =>
