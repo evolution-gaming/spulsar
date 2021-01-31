@@ -18,16 +18,13 @@ jobs:
         ports:
           - 6650:6650
           - 8080:8080
-#        options: >-
-#          --health-cmd "curl -s http://pulsar:8080/admin/v2/namespaces/public"
-#          --health-interval 1s
-#          --health-timeout 5s
-#          --health-retries 10
+        options: >-
+          --health-cmd "curl -s http://pulsar:8080/admin/v2/namespaces/public"
+          --health-interval 1s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
-      - name: pulsar logs
-        run: docker logs "${{ job.services.pulsar.id }}"
-
       - uses: actions/checkout@v2
 
       - uses: coursier/cache-action@v5
