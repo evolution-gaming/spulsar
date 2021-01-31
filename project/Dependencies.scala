@@ -2,9 +2,10 @@ import sbt._
 
 object Dependencies {
 
-  val `cats-helper`    = "com.evolutiongaming" %% "cats-helper"    % "2.2.1"
-  val smetrics         = "com.evolutiongaming" %% "smetrics"       % "0.2.0"
-  val `kind-projector` = "org.typelevel"        % "kind-projector" % "0.10.3"
+  val `cats-helper`             = "com.evolutiongaming"    %% "cats-helper"             % "2.2.1"
+  val smetrics                  = "com.evolutiongaming"    %% "smetrics"                % "0.2.0"
+  val `kind-projector`          = "org.typelevel"           % "kind-projector"          % "0.10.3"
+  val `scala-collection-compat` = "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.6"
 
   object Cats {
     private val version = "2.3.1"

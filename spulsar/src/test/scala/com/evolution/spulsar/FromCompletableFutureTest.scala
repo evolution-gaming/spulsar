@@ -18,7 +18,7 @@ class FromCompletableFutureTest extends AsyncFunSuite with Matchers {
       future <- IO { new CompletableFuture[String] }
       fiber  <- FromCompletableFuture[IO].apply { future }.start
       a      <- fiber.join.timeout(1.millis).attempt
-      _      <- IO { a should matchPattern { case Left(_: TimeoutException ) => } }
+      _      <- IO { a should matchPattern { case Left(_: TimeoutException) => } }
       _      <- IO { future.complete("value") }
       a      <- fiber.join
       _      <- IO { a shouldEqual "value" }
@@ -29,18 +29,18 @@ class FromCompletableFutureTest extends AsyncFunSuite with Matchers {
   test("successful future") {
     val future = CompletableFuture.completedFuture("value")
     val result = for {
-      a      <- FromCompletableFuture[IO].apply { future }
-      _      <- IO { a shouldEqual "value" }
+      a <- FromCompletableFuture[IO].apply { future }
+      _ <- IO { a shouldEqual "value" }
     } yield {}
     result.run()
   }
 
   test("failed future") {
     val result = for {
-      error  <- IO { new RuntimeException() with NoStackTrace: Throwable }
-      future  = CompletableFuture.failedFuture[Unit](error)
-      a      <- FromCompletableFuture[IO].apply { future }.attempt
-      _      <- IO { a shouldEqual error.asLeft }
+      error <- IO { new RuntimeException() with NoStackTrace: Throwable }
+      future = CompletableFuture.failedFuture[Unit](error)
+      a     <- FromCompletableFuture[IO].apply { future }.attempt
+      _     <- IO { a shouldEqual error.asLeft }
     } yield {}
     result.run()
   }

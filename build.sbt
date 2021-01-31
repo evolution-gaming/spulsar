@@ -34,13 +34,13 @@ lazy val spulsar = (project
       Cats.effect,
       `cats-helper`,
       smetrics,
+      `scala-collection-compat`,
       Pulsar.client,
       Scalatest.scalatest % Test,
       Scalatest.funsuite % Test)))
 
 lazy val tests = (project in file("tests")
   settings (name := "spulsar-tests")
-  settings (skip in publish := true)
   dependsOn spulsar % "compile->compile;test->test"
   settings commonSettings
   settings Seq(

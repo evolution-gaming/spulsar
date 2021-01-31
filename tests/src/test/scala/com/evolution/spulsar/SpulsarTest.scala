@@ -1,6 +1,6 @@
 package com.evolution.spulsar
 
-import cats.effect.{IO, Timer}
+import cats.effect.IO
 import cats.syntax.all._
 import com.evolution.spulsar.IOSuite._
 import com.evolutiongaming.catshelper.CatsHelper._
@@ -12,24 +12,24 @@ import pureconfig.{ConfigReader, ConfigSource}
 import pureconfig.generic.semiauto.deriveReader
 
 import java.util.UUID
-import scala.concurrent.duration._
 
 class SpulsarTest extends AsyncFunSuite with Matchers {
   import SpulsarTest._
 
   test("produce and consume") {
-    val config = ConfigSource.default
+    val config = ConfigSource
+      .default
       .at("evolution.spulsar.client")
       .load[Config] match {
-        case Right(a) => a.pure[IO]
-        case Left(a)  => new ConfigReaderException[Config](a).raiseError[IO, Config]
+      case Right(a) => a.pure[IO]
+      case Left(a) =>
+        new ConfigReaderException[Config](a).raiseError[IO, Config]
     }
 
     val result = for {
-      config   <- config.toResource
-      _        <- IO { println(config) }.toResource
-      client   <- Client.of(s"pulsar://${config.host}:${config.port}")
-      topic    = "topic"
+      config <- config.toResource
+      client <- Client.of(s"pulsar://${config.host}:${config.port}")
+      topic   = "topic"
       producer <- client.producer(Schema.STRING) { config =>
         config
           .topic(topic)
@@ -43,13 +43,12 @@ class SpulsarTest extends AsyncFunSuite with Matchers {
       }
     } yield for {
       value <- IO { UUID.randomUUID().toString }
-      fiber <- 10
-        .tailRecM { n =>
+      fiber <- 10.tailRecM { n =>
         if (n <= 0) {
           none[Message[String]].asRight[Int].pure[IO]
         } else {
           for {
-            message <- FromCompletableFuture[IO].apply { consumer.receiveAsync() }
+            message <- consumer.receive
           } yield {
             if (message.getValue == value) {
               message.some.asRight[Int]
@@ -58,12 +57,10 @@ class SpulsarTest extends AsyncFunSuite with Matchers {
             }
           }
         }
-      }
-        .start
-      messageId <- FromCompletableFuture[IO].apply { producer.sendAsync(value) }
-      _ <- IO { println(s"messageId: $messageId") }
-      message <- fiber.join
-      _ <- IO { message.map { _.getMessageId } shouldEqual messageId.some }
+      }.start
+      messageId <- producer.send(value).flatten
+      message   <- fiber.join
+      _         <- IO { message.map { _.getMessageId } shouldEqual messageId.some }
     } yield {}
     result.use { a => a }.run()
   }

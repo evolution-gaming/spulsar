@@ -1,15 +1,23 @@
 package com.evolution.spulsar
 
-import cats.Monad
 import cats.effect.{Resource, Sync}
 import cats.syntax.all._
-import org.apache.pulsar.client.api._
+import org.apache.pulsar.client.api.{
+  ConsumerBuilder,
+  ProducerBuilder,
+  PulsarClient,
+  Schema
+}
 
 trait Client[F[_]] {
 
-  def producer[A](schema: Schema[A])(f: ProducerBuilder[A] => ProducerBuilder[A]): Resource[F, Producer[A]]
+  def producer[A](schema: Schema[A])(
+    f: ProducerBuilder[A] => ProducerBuilder[A]
+  ): Resource[F, Producer[F, A]]
 
-  def consumer[A](schema: Schema[A])(f: ConsumerBuilder[A] => ConsumerBuilder[A]): Resource[F, Consumer[A]]
+  def consumer[A](schema: Schema[A])(
+    f: ConsumerBuilder[A] => ConsumerBuilder[A]
+  ): Resource[F, Consumer[F, A]]
 }
 
 object Client {
@@ -26,7 +34,7 @@ object Client {
     of(pulsarClient)
   }
 
-  def of[F[_]: Monad: FromCompletableFuture](
+  def of[F[_]: Sync: FromCompletableFuture](
     pulsarClient: F[PulsarClient]
   ): Resource[F, Client[F]] = {
     Resource
@@ -38,22 +46,22 @@ object Client {
       .map { pulsarClient =>
         new Client[F] {
 
-          def producer[A](schema: Schema[A])(f: ProducerBuilder[A] => ProducerBuilder[A]) = {
+          def producer[A](
+            schema: Schema[A]
+          )(f: ProducerBuilder[A] => ProducerBuilder[A]) = {
             val producer = f(pulsarClient.newProducer(schema))
-            Resource.make {
-              FromCompletableFuture[F].apply { producer.createAsync() }
-            } { producer =>
-              FromCompletableFuture[F].apply { producer.closeAsync() }.void
-            }
+            Producer.of(FromCompletableFuture[F].apply {
+              producer.createAsync()
+            })
           }
 
-          def consumer[A](schema: Schema[A])(f: ConsumerBuilder[A] => ConsumerBuilder[A]) = {
+          def consumer[A](
+            schema: Schema[A]
+          )(f: ConsumerBuilder[A] => ConsumerBuilder[A]) = {
             val consumer = f(pulsarClient.newConsumer(schema))
-            Resource.make {
-              FromCompletableFuture[F].apply { consumer.subscribeAsync() }
-            } { consumer =>
-              FromCompletableFuture[F].apply { consumer.closeAsync() }.void
-            }
+            Consumer.of(FromCompletableFuture[F].apply {
+              consumer.subscribeAsync()
+            })
           }
         }
       }
