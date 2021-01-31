@@ -3,10 +3,13 @@ package com.evolution.spulsar
 import cats.Monad
 import cats.effect.{Resource, Sync}
 import cats.syntax.all._
-import org.apache.pulsar.client.api.{Producer, PulsarClient}
+import org.apache.pulsar.client.api.{Consumer, Producer, PulsarClient}
 
 trait Client[F[_]] {
+
   def producer(topic: String): Resource[F, Producer[Array[Byte]] /*TODO*/ ]
+
+  def consumer(topic: String): Resource[F, Consumer[Array[Byte]] /*TODO*/ ]
 }
 
 object Client {
@@ -42,6 +45,17 @@ object Client {
               FromCompletableFuture[F].apply { producer.createAsync() }
             } { producer =>
               FromCompletableFuture[F].apply { producer.closeAsync() }.void
+            }
+          }
+
+          def consumer(topic: String) = {
+            val consumer = pulsarClient
+              .newConsumer()
+              .topic(topic)
+            Resource.make {
+              FromCompletableFuture[F].apply { consumer.subscribeAsync() }
+            } { consumer =>
+              FromCompletableFuture[F].apply { consumer.closeAsync() }.void
             }
           }
         }
