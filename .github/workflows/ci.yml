@@ -14,8 +14,7 @@ jobs:
 
     services:
       pulsar:
-        image: apachepulsar/pulsar:2.7.0
-        command: bin/pulsar standalone
+        image: apachepulsar/pulsar-standalone:2.7.0
         ports:
           - 6650:6650
           - 8080:8080
