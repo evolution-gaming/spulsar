@@ -11,6 +11,8 @@ import pureconfig.error.ConfigReaderException
 import pureconfig.{ConfigReader, ConfigSource}
 import pureconfig.generic.semiauto.deriveReader
 
+import scala.concurrent.duration._
+
 import java.util.UUID
 
 class SpulsarTest extends AsyncFunSuite with Matchers {
@@ -43,24 +45,20 @@ class SpulsarTest extends AsyncFunSuite with Matchers {
       }
     } yield for {
       value <- IO { UUID.randomUUID().toString }
-      fiber <- 10.tailRecM { n =>
-        if (n <= 0) {
-          none[Message[String]].asRight[Int].pure[IO]
-        } else {
-          for {
-            message <- consumer.receive
-          } yield {
-            if (message.getValue == value) {
-              message.some.asRight[Int]
-            } else {
-              (n - 1).asLeft[Option[Message[String]]]
-            }
+      fiber <- {
+        consumer
+          .receive
+          .map { message =>
+            if (message.getValue == value) message.some
+            else none[Message[String]]
           }
-        }
-      }.start
+          .untilDefinedM
+          .timeout(5.seconds)
+          .start
+      }
       messageId <- producer.send(value).flatten
       message   <- fiber.join
-      _         <- IO { message.map { _.getMessageId } shouldEqual messageId.some }
+      _         <- IO { message.getMessageId shouldEqual messageId }
     } yield {}
     result.use { a => a }.run()
   }
