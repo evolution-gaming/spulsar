@@ -193,20 +193,23 @@ object Consumer {
   def apply[F[_]: Sync: FromCompletableFuture, A](
     consumer: api.Consumer[A]
   ): Consumer[F, A] = {
+
+    val fromCompletableFuture = FromCompletableFuture[F]
+
     new Consumer[F, A] {
 
       def topic = consumer.getTopic
 
       def subscription = consumer.getSubscription
 
-      def unsubscribe = FromCompletableFuture[F].apply {
-        consumer.unsubscribeAsync()
-      }.void
+      def unsubscribe = {
+        fromCompletableFuture { consumer.unsubscribeAsync() }.void
+      }
 
-      def receive = FromCompletableFuture[F].apply { consumer.receiveAsync() }
+      def receive = fromCompletableFuture { consumer.receiveAsync() }
 
-      def batchReceive = FromCompletableFuture[F].apply {
-        consumer.batchReceiveAsync()
+      def batchReceive = {
+        fromCompletableFuture { consumer.batchReceiveAsync() }
       }
 
       def negativeAcknowledge(message: Message[_]) = {
@@ -222,96 +225,73 @@ object Consumer {
       }
 
       def acknowledge(message: Message[_]) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply { consumer.acknowledgeAsync(message) }
-          .void
+        fromCompletableFuture { consumer.acknowledgeAsync(message) }.void
       }
 
       def acknowledge(messageId: MessageId) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply { consumer.acknowledgeAsync(messageId) }
-          .void
+        fromCompletableFuture { consumer.acknowledgeAsync(messageId) }.void
       }
 
       def acknowledge(messageId: MessageId, transaction: Transaction) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply { consumer.acknowledgeAsync(messageId, transaction) }
-          .void
+        fromCompletableFuture {
+          consumer.acknowledgeAsync(messageId, transaction)
+        }.void
       }
 
       def acknowledge(messages: Messages[_]) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply { consumer.acknowledgeAsync(messages) }
-          .void
+        fromCompletableFuture { consumer.acknowledgeAsync(messages) }.void
       }
 
       def acknowledge(messageIds: List[MessageId]) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply { consumer.acknowledgeAsync(messageIds.asJava) }
-          .void
+        fromCompletableFuture {
+          consumer.acknowledgeAsync(messageIds.asJava)
+        }.void
       }
 
       def reconsumeLater(message: Message[_], delay: FiniteDuration) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply {
-            consumer.reconsumeLaterAsync(message, delay.length, delay.unit)
-          }
-          .void
+        fromCompletableFuture.apply {
+          consumer.reconsumeLaterAsync(message, delay.length, delay.unit)
+        }.void
       }
 
       def reconsumeLater(messages: Messages[_], delay: FiniteDuration) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply {
-            consumer.reconsumeLaterAsync(messages, delay.length, delay.unit)
-          }
-          .void
+        fromCompletableFuture.apply {
+          consumer.reconsumeLaterAsync(messages, delay.length, delay.unit)
+        }.void
       }
 
       def acknowledgeCumulative(message: Message[_]) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply { consumer.acknowledgeCumulativeAsync(message) }
-          .void
+        fromCompletableFuture {
+          consumer.acknowledgeCumulativeAsync(message)
+        }.void
       }
 
       def acknowledgeCumulative(messageId: MessageId) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply { consumer.acknowledgeCumulativeAsync(messageId) }
-          .void
+        fromCompletableFuture {
+          consumer.acknowledgeCumulativeAsync(messageId)
+        }.void
       }
 
       def acknowledgeCumulative(
         messageId: MessageId,
         transaction: Transaction
       ) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply { consumer.acknowledgeCumulativeAsync(messageId, transaction) }
-          .void
+        fromCompletableFuture {
+          consumer.acknowledgeCumulativeAsync(messageId, transaction)
+        }.void
       }
 
       def reconsumeLaterCumulative(
         message: Message[_],
         delay: FiniteDuration
       ) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply {
-            consumer.reconsumeLaterCumulativeAsync(
-              message,
-              delay.length,
-              delay.unit
-            )
-          }
-          .void
+        fromCompletableFuture.apply {
+          consumer.reconsumeLaterCumulativeAsync(
+            message,
+            delay.length,
+            delay.unit
+          )
+        }.void
       }
 
       def stats = Sync[F].delay { consumer.getStats }
@@ -323,18 +303,15 @@ object Consumer {
       }
 
       def seek(messageId: MessageId) = {
-        FromCompletableFuture
-          .apply[F]
-          .apply { consumer.seekAsync(messageId) }
-          .void
+        fromCompletableFuture { consumer.seekAsync(messageId) }.void
       }
 
       def seek(timestamp: Long) = {
-        FromCompletableFuture[F].apply { consumer.seekAsync(timestamp) }.void
+        fromCompletableFuture { consumer.seekAsync(timestamp) }.void
       }
 
       def lastMessageId = {
-        FromCompletableFuture[F].apply { consumer.getLastMessageIdAsync }
+        fromCompletableFuture { consumer.getLastMessageIdAsync }
       }
 
       def connected = Sync[F].delay { consumer.isConnected }

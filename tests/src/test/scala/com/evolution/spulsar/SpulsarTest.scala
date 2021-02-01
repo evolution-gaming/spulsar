@@ -79,6 +79,7 @@ class SpulsarTest extends AsyncFunSuite with Matchers {
 //      _                    <- IO { hasReachedEndOfTopic shouldEqual true }
       lastMessageId        <- consumer.lastMessageId
 //      _                    <- IO { lastMessageId shouldEqual messageId }
+      _                    <- consumer.unsubscribe
     } yield {}
     result.use { a => a }.run()
   }
