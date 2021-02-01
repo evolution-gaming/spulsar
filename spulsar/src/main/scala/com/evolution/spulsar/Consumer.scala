@@ -158,7 +158,7 @@ trait Consumer[F[_], A] {
   /**
     * @see [[org.apache.pulsar.client.api.Consumer.getConsumerName]]
     */
-  def consumerName: String
+  def name: String
 
   /**
     * @see [[org.apache.pulsar.client.api.Consumer.pause]]
@@ -339,7 +339,7 @@ object Consumer {
 
       def connected = Sync[F].delay { consumer.isConnected }
 
-      def consumerName = consumer.getConsumerName
+      def name = consumer.getConsumerName
 
       def pause = Sync[F].delay { consumer.pause() }
 

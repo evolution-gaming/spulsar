@@ -18,7 +18,7 @@ trait Producer[F[_], A] {
   /**
     * @see [[org.apache.pulsar.client.api.Producer.getProducerName]]
     */
-  def producerName: String
+  def name: String
 
   /**
     * @see [[org.apache.pulsar.client.api.Producer.sendAsync]]
@@ -71,7 +71,7 @@ object Producer {
 
       def topic = producer.getTopic
 
-      def producerName = producer.getProducerName
+      def name = producer.getProducerName
 
       def send(message: A) = {
         Sync

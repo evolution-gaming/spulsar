@@ -29,22 +29,32 @@ class SpulsarTest extends AsyncFunSuite with Matchers {
     }
 
     val result = for {
+      topic  <- IO { UUID.randomUUID().toString }.toResource
       config <- config.toResource
       client <- Client.of(s"pulsar://${config.host}:${config.port}")
-      topic   = "topic"
+      name    = "SpulsarTest"
       producer <- client.producer(Schema.STRING) { config =>
         config
           .topic(topic)
-          .producerName("SpulsarTest")
+          .producerName(name)
       }
       consumer <- client.consumer(Schema.STRING) { config =>
         config
           .topic(topic)
-          .consumerName("SpulsarTest")
-          .subscriptionName("SpulsarTest")
+          .consumerName(name)
+          .subscriptionName(name)
       }
     } yield for {
-      value <- IO { UUID.randomUUID().toString }
+      connected <- producer.connected
+      _         <- IO { connected shouldEqual true }
+      connected <- consumer.connected
+      _         <- IO { connected shouldEqual true }
+      _         <- IO { producer.name shouldEqual name }
+      _         <- IO { consumer.name shouldEqual name }
+      _         <- IO { producer.topic shouldEqual topic }
+      _         <- IO { consumer.topic shouldEqual topic }
+      _         <- IO { consumer.subscription shouldEqual name }
+      value     <- IO { UUID.randomUUID().toString }
       fiber <- {
         consumer
           .receive
@@ -56,9 +66,19 @@ class SpulsarTest extends AsyncFunSuite with Matchers {
           .timeout(5.seconds)
           .start
       }
-      messageId <- producer.send(value).flatten
-      message   <- fiber.join
-      _         <- IO { message.getMessageId shouldEqual messageId }
+      messageId            <- producer.send(value).flatten
+      _                    <- producer.flush
+      lastSequenceId       <- producer.lastSequenceId
+      message              <- fiber.join
+      _                    <- consumer.acknowledge(message)
+      _                    <- consumer.pause
+      _                    <- consumer.resume
+      _                    <- IO { message.getMessageId shouldEqual messageId }
+      _                    <- IO { message.getSequenceId shouldEqual lastSequenceId }
+      hasReachedEndOfTopic <- consumer.hasReachedEndOfTopic
+//      _                    <- IO { hasReachedEndOfTopic shouldEqual true }
+      lastMessageId        <- consumer.lastMessageId
+//      _                    <- IO { lastMessageId shouldEqual messageId }
     } yield {}
     result.use { a => a }.run()
   }
