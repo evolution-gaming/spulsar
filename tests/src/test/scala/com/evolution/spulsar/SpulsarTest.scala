@@ -31,7 +31,7 @@ class SpulsarTest extends AsyncFunSuite with Matchers {
     val result = for {
       topic  <- IO { UUID.randomUUID().toString }.toResource
       config <- config.toResource
-      client <- Client.of(s"pulsar://${config.host}:${config.port}")
+      client <- Client.fromClientBuilder[IO] { _.serviceUrl(s"pulsar://${config.host}:${config.port}") }
       name    = "SpulsarTest"
       producer <- client.producer(Schema.STRING) { config =>
         config

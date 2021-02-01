@@ -4,12 +4,7 @@ import cats.effect.{Resource, Sync}
 import cats.syntax.all._
 import org.apache.pulsar.client.api
 import org.apache.pulsar.client.api.transaction.Transaction
-import org.apache.pulsar.client.api.{
-  ConsumerStats,
-  Message,
-  MessageId,
-  Messages
-}
+import org.apache.pulsar.client.api.{ConsumerStats, Message, MessageId, Messages}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters._

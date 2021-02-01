@@ -2,12 +2,7 @@ package com.evolution.spulsar
 
 import cats.effect.{Resource, Sync}
 import cats.syntax.all._
-import org.apache.pulsar.client.api.{
-  ConsumerBuilder,
-  ProducerBuilder,
-  PulsarClient,
-  Schema
-}
+import org.apache.pulsar.client.api.{ClientBuilder, ConsumerBuilder, ProducerBuilder, PulsarClient, Schema}
 
 trait Client[F[_]] {
 
@@ -22,19 +17,14 @@ trait Client[F[_]] {
 
 object Client {
 
-  def of[F[_]: Sync: FromCompletableFuture](
-    serviceUrl: String
+  def fromClientBuilder[F[_]: Sync: FromCompletableFuture](
+    f: ClientBuilder => ClientBuilder
   ): Resource[F, Client[F]] = {
-    val pulsarClient = Sync[F].delay {
-      PulsarClient
-        .builder()
-        .serviceUrl(serviceUrl)
-        .build()
-    }
-    of(pulsarClient)
+    val pulsarClient = Sync[F].delay { f(PulsarClient.builder()).build() }
+    fromPulsarClient(pulsarClient)
   }
 
-  def of[F[_]: Sync: FromCompletableFuture](
+  def fromPulsarClient[F[_]: Sync: FromCompletableFuture](
     pulsarClient: F[PulsarClient]
   ): Resource[F, Client[F]] = {
     Resource
@@ -46,22 +36,16 @@ object Client {
       .map { pulsarClient =>
         new Client[F] {
 
-          def producer[A](
-            schema: Schema[A]
-          )(f: ProducerBuilder[A] => ProducerBuilder[A]) = {
-            val producer = f(pulsarClient.newProducer(schema))
-            Producer.of(FromCompletableFuture[F].apply {
-              producer.createAsync()
-            })
+          def producer[A](schema: Schema[A])(f: ProducerBuilder[A] => ProducerBuilder[A]) = {
+            val builder  = f(pulsarClient.newProducer(schema))
+            val producer = FromCompletableFuture[F].apply { builder.createAsync() }
+            Producer.of(producer)
           }
 
-          def consumer[A](
-            schema: Schema[A]
-          )(f: ConsumerBuilder[A] => ConsumerBuilder[A]) = {
-            val consumer = f(pulsarClient.newConsumer(schema))
-            Consumer.of(FromCompletableFuture[F].apply {
-              consumer.subscribeAsync()
-            })
+          def consumer[A](schema: Schema[A])(f: ConsumerBuilder[A] => ConsumerBuilder[A]) = {
+            val builder  = f(pulsarClient.newConsumer(schema))
+            val consumer = FromCompletableFuture[F].apply { builder.subscribeAsync() }
+            Consumer.of(consumer)
           }
         }
       }

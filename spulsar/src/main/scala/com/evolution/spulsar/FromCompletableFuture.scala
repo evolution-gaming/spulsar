@@ -18,8 +18,7 @@ object FromCompletableFuture {
     implicit F: FromCompletableFuture[F]
   ): FromCompletableFuture[F] = F
 
-  implicit def concurrentCompletableFuture[F[_]: Concurrent]
-    : FromCompletableFuture[F] = {
+  implicit def concurrentCompletableFuture[F[_]: Concurrent]: FromCompletableFuture[F] = {
     new FromCompletableFuture[F] {
       def apply[A](a: => CompletableFuture[A]) = {
         Sync[F].delay { a }.flatMap { a =>
